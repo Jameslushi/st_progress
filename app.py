@@ -6,6 +6,7 @@ import numpy as np
 from matplotlib.font_manager import FontProperties
 import matplotlib.ticker as ticker
 from datetime import date
+from io import BytesIO
 
 def main_zh():
     
@@ -69,7 +70,6 @@ def main_zh():
     ### 計算流程以下都沒問題 ###
 
     final_df=edited_df
-
 
     if len(final_df)==0:
         exit()
@@ -151,24 +151,49 @@ def main_zh():
         # 顯示圖形
         st.pyplot(fig)
 
-    # 下載 CSV 按鈕
-    csv_data = pd.DataFrame({
+    # # 下載 CSV 按鈕
+    # csv_data = pd.DataFrame({
+    #     'date': date_range,
+    #     'progress(%)': daily_progress/100,
+    #     'sum_progress(%)': cumulative_progress/100
+    # })
+    # csv_data['date'] = csv_data['date'].dt.strftime('%Y-%m-%d')  # 將日期轉換為字串格式
+    # csv_string = csv_data.to_csv(index=False, encoding='utf-8-sig')
+
+    # 產生 Excel 資料
+    excel_data = pd.DataFrame({
         'date': date_range,
         'progress(%)': daily_progress/100,
         'sum_progress(%)': cumulative_progress/100
     })
-    csv_data['date'] = csv_data['date'].dt.strftime('%Y-%m-%d')  # 將日期轉換為字串格式
-    csv_string = csv_data.to_csv(index=False, encoding='utf-8-sig')
+    excel_data['date'] = excel_data['date'].dt.strftime('%Y-%m-%d')  # 將日期轉換為字串格式
+
+    # 將 DataFrame 轉換為 Excel 格式
+    def to_excel(df):
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Progress Data')
+        return output.getvalue()
+
 
     # 提供下載按鈕
 
     with col1:
 
+        # st.download_button(
+        #     label="下載 CSV 檔案",
+        #     data=csv_string,
+        #     file_name='progress_data.csv',
+        #     mime='text/csv'
+        # )
+
+        # 下載 Excel 按鈕
+        excel_data_bytes = to_excel(excel_data)
         st.download_button(
-            label="下載 CSV 檔案",
-            data=csv_string,
-            file_name='progress_data.csv',
-            mime='text/csv'
+            label="下載 Excel 檔案",
+            data=excel_data_bytes,
+            file_name='progress_data.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
 
 
